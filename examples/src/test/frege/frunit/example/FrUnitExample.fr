@@ -1,0 +1,19 @@
+module frunit.example.FrUnitExample where
+
+import frunit.FrUnit
+
+testList :: TestCase
+testList = TestCase "List" $ do
+  assertTrue "null [] is true" (null [])
+  assertFalse "null [1] is false" (null [1])
+  assertEquals "head [1] returns 1" (head [1]) 1
+  assertException "head [] throws exception" (head []) (undefined::Undefined)
+
+testMaybe :: TestCase
+testMaybe = TestCase "Maybe" $ do
+  assertEquals "maybe 2 (+1) Nothing is 2" (maybe 2 (+1) Nothing) 2
+  assertEquals "maybe 2 (+1) (Just 2) is 3" (maybe 2 (+1) (Just 2)) 3
+          
+main :: IO ()
+main = runTests [testList
+                ,testMaybe]

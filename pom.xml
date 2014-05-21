@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>frunit</groupId>
+  <artifactId>FrUnit</artifactId>
+  <packaging>jar</packaging>
+  <version>0.1.0</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <frege.plugin.version>1.0.5</frege.plugin.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <compilerArgument>-Xlint:unchecked</compilerArgument>
+        </configuration>
+        <executions>
+					<execution>
+            <id>compile</id>
+            <phase>generate-sources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+				</executions>
+      </plugin>
+      <plugin>
+        <groupId>com.theoryinpractise.frege</groupId>
+        <artifactId>frege-maven-plugin</artifactId>
+        <version>${frege.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>compile</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>test-compile</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>test-compile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <inline>true</inline>
+          <hints>true</hints>
+          <sourceDirectory>src/main/frege</sourceDirectory>
+          <testSourceDirectory>src/test/frege</testSourceDirectory>
+          <outputDirectory>target/generated-sources/frege</outputDirectory>
+          <testOutputDirectory>target/generated-test-sources/frege</testOutputDirectory>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+    </dependency>
+    <dependency>
+      <groupId>com.theoryinpractise.frege</groupId>
+      <artifactId>frege</artifactId>
+      <version>3.21.586-g026e8d7</version>
+    </dependency>
+  </dependencies>
+</project>

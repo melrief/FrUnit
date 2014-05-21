@@ -1,0 +1,78 @@
+module frunit.FrUnit where
+
+private data LinkedList a = native java.util.LinkedList where
+  native new :: () -> STMutable s (LinkedList a)
+  native add :: Mutable s (LinkedList a) -> a  -> ST s ()
+
+  -- Converts a Frege List into a Java LinkedList
+  fromList   :: [a] -> STMutable s (LinkedList a)
+  fromList ls = LinkedList.new() >>= (\ll -> go ll ls)
+    where go :: Mutable s (LinkedList a) -> [a] -> STMutable s (LinkedList a)
+          go ll     [] = return ll
+          go ll (x:xs) = ll.add x >> go ll xs
+
+-- The test shell, used as container of our Frege expressions
+private data TestNative = native frunit.FrTest where
+  native runTests frunit.FrTest.runTests :: Mutable s (LinkedList TestInt) -> ST s ()
+
+  run :: [TestCase] -> ST s ()
+  run ls = LinkedList.fromList (map toJArray ls) >>= TestNative.runTests
+
+private data ArrayUtil = native frunit.FrTest.Util where
+  pure native fromPair frunit.FrTest.Util.fromPair :: a -> b -> JArray c
+
+private data Assert = native org.junit.Assert where
+  native assertTrue org.junit.Assert.assertTrue :: Bool -> ST s ()
+                                                | String -> Bool -> ST s ()
+  native assertFalse org.junit.Assert.assertFalse :: Bool -> ST s ()
+                                                  | String -> Bool -> ST s ()
+  native fail org.junit.Assert.fail :: () -> ST s ()
+                                    | String -> ST s ()
+
+-- Internally a test is an array of Object because JUnit
+private type TestInt = JArray Object
+
+-- Converts a test case into an array of objects beucase JUnit
+private toJArray :: TestCase -> TestInt
+private toJArray (TestCase s a) = ArrayUtil.fromPair s a
+
+-- | Executes a list of tests
+runTests :: [TestCase] -> ST s ()
+runTests = TestNative.run
+
+assertTrue' :: Bool -> ST s ()
+assertTrue' = Assert.assertTrue
+
+assertTrue :: String -> Bool -> ST s ()
+assertTrue msg b = Assert.assertTrue msg b
+
+assertFalse' :: Bool -> ST s ()
+assertFalse' = Assert.assertFalse
+
+assertFalse :: String -> Bool -> ST s ()
+assertFalse msg b = Assert.assertFalse msg b
+
+fail' :: ST s ()
+fail' = Assert.fail ()
+
+fail :: String -> ST s ()
+fail s = Assert.fail s
+
+assertEquals' :: (Eq a) => a -> a -> ST s ()
+assertEquals' x y = assertTrue' (x == y)
+
+assertEquals :: (Eq a) => String -> a -> a -> ST s ()
+assertEquals msg x y = assertTrue msg (x == y)
+
+private mkHandler :: Exceptional e => e -> (e -> IO ())
+private mkHandler _ = \_ -> assertTrue' true
+
+--ofType :: Exceptional e => e
+--ofType = undefined
+
+-- assertException "Test Exception" (head []) (undefined::Exception)
+assertException :: (Exceptional e) => String -> a -> e -> IO ()
+assertException msg x e = (return x >> fail msg) `catch` mkHandler e
+
+-- A test case is composed by a name and the test itself
+data TestCase = TestCase String (IO ())
