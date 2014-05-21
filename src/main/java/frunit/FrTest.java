@@ -86,9 +86,9 @@ public class FrTest {
 
       final int numIgnored = result.getIgnoreCount();
       final int numTests = result.getRunCount();
-      System.out.println("numTests: "   + Integer.toString(numTests)
-                      + " numIgnored: " + Integer.toString(numIgnored)
-                      + " numFailed: "  + Integer.toString(numFailures));
+      System.out.println("Cases: "   + Integer.toString(numTests)
+                      + " Ignored: " + Integer.toString(numIgnored)
+                      + " Failures: "  + Integer.toString(numFailures));
     }
 
     //Called before any tests have been run.
