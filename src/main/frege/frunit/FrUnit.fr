@@ -32,11 +32,11 @@ private data Assert = native org.junit.Assert where
 -- Internally a test is an array of Object because JUnit
 private type TestInt = JArray Object
 
--- Converts a test case into an array of objects beucase JUnit
+-- Convert a test case into an array of objects because JUnit
 private toJArray :: TestCase -> TestInt
 private toJArray (TestCase s a) = ArrayUtil.fromPair s a
 
--- | Executes a list of tests
+--- Execute a list of tests
 runTests :: [TestCase] -> ST s ()
 runTests = TestNative.run
 
@@ -74,5 +74,5 @@ private mkHandler _ = \_ -> assertTrue' true
 assertException :: (Exceptional e) => String -> a -> e -> IO ()
 assertException msg x e = (return x >> fail msg) `catch` mkHandler e
 
--- A test case is composed by a name and the test itself
+--- A test case is composed by a name and the test itself
 data TestCase = TestCase String (IO ())
