@@ -37,9 +37,6 @@ private data TestNative = native frunit.FrTest where
     javaTestCases <- LinkedList.fromList (map toJArray testCases)
     TestNative.runTests javaTestCases
 
-private data ArrayUtil = native frunit.FrTest.Util where
-  pure native fromPair frunit.FrTest.Util.fromPair :: a -> b -> JArray c
-
 private data Assert = native org.junit.Assert where
   native assertTrue org.junit.Assert.assertTrue :: Bool -> ST s ()
                                                 | String -> Bool -> ST s ()
@@ -51,9 +48,14 @@ private data Assert = native org.junit.Assert where
 -- Internally a test is an array of Object because JUnit
 private type TestInt = JArray Object
 
+-- Convert any type to a java Object
+private pure native asObject "(java.lang.Object)" :: a -> Object
+
+derive ArrayElement Object
+
 -- Convert a test case into an array of objects because JUnit
 private toJArray :: TestCase -> TestInt
-private toJArray (TestCase s a) = ArrayUtil.fromPair s a
+private toJArray (TestCase s a) = arrayFromList [asObject s, asObject a]
 
 --- Execute a list of tests
 runTests :: [TestCase] -> IO ()

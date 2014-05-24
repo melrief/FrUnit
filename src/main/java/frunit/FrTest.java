@@ -90,10 +90,4 @@ public class FrTest {
     FrTest.setTests(tests);
     return FrTest.runTests();
   }
-
-  public static class Util {
-    public final static Object[] fromPair(Object a, Object b) {
-      return new Object[]{ a,b };
-    }
-  }
 }
