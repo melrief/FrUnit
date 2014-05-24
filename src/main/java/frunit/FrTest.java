@@ -24,10 +24,7 @@ import java.util.LinkedList;
 import org.junit.Assert;
 import org.junit.Test;
 //import org.junit.runner.notification.RunNotifier;
-import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
 import org.junit.runner.Result;
 import org.junit.runner.RunWith;
 //import org.junit.runners.model.InitializationError;
@@ -41,65 +38,6 @@ import frege.runtime.*;
 @RunWith(Parameterized.class)
 public class FrTest {
 
-  static class LambdaListener extends RunListener {
-    public LambdaListener() {
-      super();
-    }
-
-    // Called when an atomic test flags that it assumes a condition that is false
-    public void testAssumptionFailure(Failure failure) {
-      //System.out.println(failure.getMessage());
-    }
-
-    // Called when an atomic test fails.
-    public void testFailure(Failure failure) {
-      //System.out.println(failure.getMessage());
-      //System.out.println(failure.getTrace());
-    }
-
-    // Called when an atomic test has finished, whether the test succeeds or fails.
-    public void testFinished(Description description) {
-      //System.out.println(description.toString());
-    }
-
-    // Called when a test will not be run, generally because a test method is annotated with Ignore.
-    public void testIgnored(Description description) {
-    }
-
-    // Called when all tests have finished
-    public void testRunFinished(Result result) {
-      final int numFailures = result.getFailureCount();
-      if (numFailures > 0) {
-        for (Failure failure : result.getFailures()) {
-          Description desc = failure.getDescription();
-          String msg = failure.getMessage();
-          String trace = failure.getTrace();
-          System.out.print("  - Test " + desc.getDisplayName() + " failed");
-          if (msg != null) {
-            System.out.println(":\n\t" + msg);
-          } else {
-            System.out.println();
-          }
-        }
-        System.out.println();
-      }
-
-      final int numIgnored = result.getIgnoreCount();
-      final int numTests = result.getRunCount();
-      System.out.println("Cases: "   + Integer.toString(numTests)
-                      + " Ignored: " + Integer.toString(numIgnored)
-                      + " Failures: "  + Integer.toString(numFailures));
-    }
-
-    //Called before any tests have been run.
-    public void testRunStarted(Description description) {
-    }
-
-    // Called when an atomic test is about to be started.
-    public void testStarted(Description description) {
-    }
-  }
-  
   static List<Object[]> tests;
 
   @Parameters(name="{0}")
@@ -107,40 +45,50 @@ public class FrTest {
     return FrTest.tests;
   }
 
+  /**
+   * Set the test that will be executed next time {@link FrUnit#runTests()}
+   * is called
+   *
+   * @param tests the tests to set
+   */
   public static void setTests(List<Object[]> tests) {
     FrTest.tests = tests;
   }
 
-  private Object obj;
+  private Fun1 action;
 
-  public FrTest(String name, Object obj) {
-    this.obj = obj;
+  public FrTest(String name, Fun1 action) throws NullPointerException {
+    if (name == null || action == null)
+      throw new NullPointerException("Both name and action must be not null");
+    this.action = action;
   }
 
-  final static Object FAKE_OBJECT = new Object();
+  /** A dummy object used to evaluate {@link FrTest#action} */
+  private final static Object FAKE_OBJECT = new Object();
 
   @Test
   public void execute() throws Exception {
-    if (obj != null && obj instanceof Fun1) {
-      Delayed.forced(((Fun1)obj).apply(FAKE_OBJECT).result());
-    } else {
-      Assert.fail("Fail: object " + obj.toString() + " isn't a delayed test"
-                + " (type: " + obj.getClass().toString());
-    }
+    Delayed.forced((this.action).apply(FrTest.FAKE_OBJECT).result());
   }
 
-  public final static void runTests() {
+  /**
+   * Run all the tests in {@link FrTest#tests}
+   *
+   * @return true if all the tests pass else false
+   */
+  public final static boolean runTests() {
     JUnitCore junit = new JUnitCore();
-    junit.addListener(new LambdaListener());
+    junit.addListener(new FrTestRunListener());
     Result result = junit.run(FrTest.class);
+    return result.getFailureCount() == 0;
     //System.out.println("Result: " + result.toString());
     //BlockJUnit4ClassRunner runner = new BlockJUnit4ClassRunner(FrTest.class);
     //junit.run(new RunNotifier());
   }
 
-  public final static void runTests(List<Object[]> tests) {
+  public final static boolean runTests(List<Object[]> tests) {
     FrTest.setTests(tests);
-    FrTest.runTests();
+    return FrTest.runTests();
   }
 
   public static class Util {

@@ -30,10 +30,12 @@ private data LinkedList a = native java.util.LinkedList where
 
 -- The test shell, used as container of our Frege expressions
 private data TestNative = native frunit.FrTest where
-  native runTests frunit.FrTest.runTests :: Mutable s (LinkedList TestInt) -> ST s ()
+  native runTests frunit.FrTest.runTests :: Mutable s (LinkedList TestInt) -> ST s Bool
 
-  run :: [TestCase] -> ST s ()
-  run ls = LinkedList.fromList (map toJArray ls) >>= TestNative.runTests
+  run :: [TestCase] -> ST s Bool
+  run testCases = do
+    javaTestCases <- LinkedList.fromList (map toJArray testCases)
+    TestNative.runTests javaTestCases
 
 private data ArrayUtil = native frunit.FrTest.Util where
   pure native fromPair frunit.FrTest.Util.fromPair :: a -> b -> JArray c
@@ -54,8 +56,10 @@ private toJArray :: TestCase -> TestInt
 private toJArray (TestCase s a) = ArrayUtil.fromPair s a
 
 --- Execute a list of tests
-runTests :: [TestCase] -> ST s ()
-runTests = TestNative.run
+runTests :: [TestCase] -> IO ()
+runTests tests = do
+  result <- TestNative.run tests
+  System.exit (if result then 0 else 1)
 
 assertTrue' :: Bool -> ST s ()
 assertTrue' = Assert.assertTrue
@@ -84,7 +88,8 @@ assertEquals msg x y = assertTrue msg (x == y)
 private mkHandler :: Exceptional e => e -> (e -> IO ())
 private mkHandler _ = \_ -> assertTrue' true
 
---ofType :: Exceptional e => e
+-- TODO: currently odType doesn't work because it is evaluated by frege
+--ofType :: e
 --ofType = undefined
 
 -- assertException "Test Exception" (head []) (undefined::Exception)
